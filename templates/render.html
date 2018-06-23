@@ -1,0 +1,133 @@
+<html>
+    <header>
+        <script>
+            const BOARD_SIZE = 19
+            const CROP_SIZE = 32
+            const RECTIFIED_SIZE = 19 * CROP_SIZE
+            const PIECE_SIZE = RECTIFIED_SIZE / BOARD_SIZE
+
+            function dot(mat, vec){
+                const res = []
+                for(let i=0;i<mat.length;i++){
+                    let r = 0
+                    for(let j=0;j<mat[0].length;j++){
+                        r += mat[i][j] * vec[j]
+                    }
+                    res.push(r)
+                }
+                return res
+            }
+
+            function draw_stones(ctx, gf, h){
+                for(let x = 0; x < BOARD_SIZE; x++){
+                    for(let y = 0; y < BOARD_SIZE; y++){
+                        const stone = gf[y][x]
+                        if(stone == ' ')
+                            continue
+                        mid = h((x + 0.5) * PIECE_SIZE, (y + 0.5) * PIECE_SIZE)
+                        if(stone == 'X')
+                            ctx.fillStyle = 'rgba(255, 0, 0, 0.8)'
+                        else
+                            ctx.fillStyle = 'rgba(0, 255, 0, 0.8)'
+                        ctx.beginPath()
+                        ctx.ellipse(mid[0], mid[1], PIECE_SIZE*0.4, PIECE_SIZE*0.4, 0, 0, 2 * Math.PI)
+                        ctx.fill()
+                    }
+                }
+            }
+
+            function draw_territory(ctx, gf, h){
+                ctx.lineWidth   = 10
+                ctx.strokeStyle = 'rgba(255, 0, 0, 1.0)'
+                ctx.beginPath()
+                for(let i of [0, BOARD_SIZE]){
+                    {
+                        const start = h(0, i * PIECE_SIZE)
+                        const end = h(RECTIFIED_SIZE, i * PIECE_SIZE)
+                        ctx.moveTo(start[0], start[1])
+                        ctx.lineTo(end[0], end[1])
+                    }
+                    {
+                        const start = h(i * PIECE_SIZE, 0)
+                        const end = h(i * PIECE_SIZE, RECTIFIED_SIZE)
+                        ctx.moveTo(start[0], start[1])
+                        ctx.lineTo(end[0], end[1])
+                    }
+                }
+                ctx.stroke()
+
+                for(let x = 0; x < BOARD_SIZE; x++){
+                    for(let y = 0; y < BOARD_SIZE; y++){
+                        const stone = gf[y][x]
+                        if(stone == ' ')
+                            continue
+                        const left = x * PIECE_SIZE
+                        const right = (x + 1) * PIECE_SIZE
+                        const up = y * PIECE_SIZE
+                        const down = (y + 1) * PIECE_SIZE
+                        const lu = h(left, up)
+                        const ld = h(left, down)
+                        const ru = h(right, up)
+                        const rd = h(right, down)
+
+                        if(stone == 'X')
+                            ctx.fillStyle = 'rgba(0, 0, 0, 0.8)'
+                        else
+                            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)'
+                        ctx.beginPath()
+                        ctx.moveTo(lu[0], lu[1])
+                        ctx.lineTo(ru[0], ru[1])
+                        ctx.lineTo(rd[0], rd[1])
+                        ctx.lineTo(ld[0], ld[1])
+                        ctx.fill()
+                    }
+                }
+            }
+
+            function draw(data){
+                const canvas = document.createElement('canvas')
+                canvas.id = 'CursorLayer'
+                canvas.width = 4000
+                canvas.height = 4000
+
+                const body = document.getElementsByTagName('body')[0]
+                body.appendChild(canvas)
+
+                const ctx = canvas.getContext('2d')
+                const img=document.getElementById('img')
+                ctx.drawImage(img,0,0)
+                ctx.fillStyle = 'rgba(255, 0, 0, 0.8)'
+                function h(x, y){
+                    const vec = [x, y, 1]
+                    const r = dot(data['h'], vec)
+                    return [r[0]/r[2], r[1]/r[2]]
+                }
+                draw_stones(ctx, data['gf'], h)
+                draw_territory(ctx, data['area'], h)
+            }
+
+            function setText(id, txt){
+                const e=document.getElementById(id)
+                e.innerHTML = txt
+            }
+
+            window.onload = function(){
+                fetch('/uploads/{{img}}_info.json').then(function(res){
+                    res.json().then(function(res){
+                        console.log(res)
+                        draw(res)
+                        setText('score_white', 'White: ' + res['score']['white'])
+                        setText('score_black', 'Black: ' + res['score']['black'])
+                    })
+                })
+            }
+        </script>
+    </header>
+    <body>
+        <h1 id="score_white">
+        </h1>
+        <h1 id="score_black">
+        </h1>
+        <img src="/uploads/{{img}}" id="img" style="display:none">
+    </body>
+</html>

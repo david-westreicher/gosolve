@@ -1,0 +1,25 @@
+<html>
+    <header>
+        <script>
+            const corners = []
+            window.onload = function(){
+                console.log('load')
+                const img = document.getElementById('img')
+                img.addEventListener('click', savePos)
+            }
+            function savePos(e){
+                const rect = e.target.getBoundingClientRect()
+                const x = e.clientX - rect.left
+                const y = e.clientY - rect.top
+                corners.push([x,y])
+                console.log(corners)
+                if(corners.length == 4){
+                    window.location.replace('/territory/{{img}}?corners=' + corners)
+                }
+            }
+        </script>
+    </header>
+    <body>
+        <img src="/uploads/{{img}}" id="img">
+    </body>
+</html>
