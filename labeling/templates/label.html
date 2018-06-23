@@ -1,0 +1,32 @@
+<html>
+    <head>
+        <script>
+            function label_image(type){
+                console.log(type)
+                if(type != 'unknown'){
+                    fetch('label?img={{image_path}}&label='+type, {method: 'POST'})
+                        .then(() => {
+                            location.reload()
+                        })
+                }else{
+                    location.reload()
+                }
+            }
+        </script>
+    </head>
+    <body>
+        <img src="{{image_path}}" style="width:500px;height:500px;display:block;margin-left:auto;margin-right:auto"/>
+        <div style="text-align:center">
+            <div style="display:inline-block">
+                <button onclick="label_image('white')">WHITE</button>
+                <button onclick="label_image('empty')">EMPTY</button>
+                <button onclick="label_image('black')">BLACK</button>
+            </div>
+        </div>
+        <div style="text-align:center">
+            <div style="display:inline-block">
+                <button onclick="label_image('unknown')">UNKNOWN</button>
+            </div>
+        </div>
+    </body>
+</html>
