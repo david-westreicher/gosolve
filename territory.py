@@ -3,7 +3,7 @@ import numpy as np
 import os
 from PIL import Image, ImageDraw, ImageFont
 from nn import Classifier
-from copy import deepcopy
+from solver import fill_territory
 
 BOARD_SIZE = 19
 CROP_SIZE = 32
@@ -184,65 +184,6 @@ def print_gamefield(gf):
     for row in gf:
         print('|' + ' '.join(row) + '|')
     print('+' + '-' * (BOARD_SIZE * 2 - 1) + '+')
-
-def neighbors(gf, comp):
-    neighs = set()
-    for x, y in comp:
-        for nx, ny in [[1, 0], [0, 1], [-1, 0], [0, -1]]:
-            ox = x + nx
-            oy = y + ny
-            if not(0 <= ox < BOARD_SIZE and 0 <= oy < BOARD_SIZE):
-                continue
-            neigh = gf[ox][oy]
-            if neigh == ' ':
-                continue
-            neighs.add(neigh)
-    return neighs
-
-def free_connected_components(gf):
-    visited = set()
-
-    def visit(x, y, comp):
-        if (x, y) in visited:
-            return
-        visited.add((x, y))
-        comp.add((x, y))
-        for nx, ny in [[1, 0], [0, 1], [-1, 0], [0, -1]]:
-            ox = x + nx
-            oy = y + ny
-            if not(0 <= ox < BOARD_SIZE and 0 <= oy < BOARD_SIZE):
-                continue
-            neigh = gf[ox][oy]
-            if neigh != ' ':
-                continue
-            visit(ox, oy, comp)
-
-    comps = []
-    for x in range(BOARD_SIZE):
-        for y in range(BOARD_SIZE):
-            if (x, y) in visited or gf[x][y] != ' ':
-                continue
-            comp = set()
-            visit(x, y, comp)
-            comps.append(comp)
-
-    '''
-    for c in comps:
-        print(c)
-    '''
-    return comps
-
-def fill_territory(gf):
-    gf = deepcopy(gf)
-    free_comps = free_connected_components(gf)
-    for num, comp in enumerate(free_comps):
-        neighs = neighbors(gf, comp)
-        if len(neighs) != 1:
-            continue
-        color, = neighs
-        for x, y in comp:
-            gf[x][y] = color
-    return gf
 
 def calc_score(gf):
     score = [0, 0]
