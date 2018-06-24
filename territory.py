@@ -3,7 +3,7 @@ import numpy as np
 import os
 from PIL import Image, ImageDraw, ImageFont
 from nn import Classifier
-from solver import fill_territory
+from solver import fill_territory_onlinego
 
 BOARD_SIZE = 19
 CROP_SIZE = 32
@@ -264,7 +264,7 @@ if __name__ == '__main__':
     debug_img.save(input_file + '_debug1.png')
 
     print_gamefield(gf)
-    gf = fill_territory(gf)
+    gf = fill_territory_onlinego(gf)
     print_gamefield(gf)
     debug_img = draw_stones(debug_img, gf)
     # debug_img.save(input_file + '_debug4.png')
