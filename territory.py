@@ -212,7 +212,7 @@ def calculate_territory(img_path, corners, predictor=Classifier()):
     stones = extract_stones(rect_img)
     predictions = [(x, y, predictor.predict(stone)) for stone, x, y in stones]
     gf = build_gamefield(predictions)
-    area = fill_territory(gf)
+    area = fill_territory_onlinego(gf)
     score = calc_score(area)
     return gf, area, H.tolist(), score
 
