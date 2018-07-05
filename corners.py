@@ -5,17 +5,23 @@ from vis import Vis
 from scipy.ndimage.filters import convolve1d, sobel
 from scipy.signal import convolve2d
 
-SCANLINE_OFFSET = 10
+SCANLINE_OFFSET = 20
+IMG_SIZE = 640
+LINES_TO_EXTRACT = 0
 
 def calc_gradient(img, pos):
     if not (img.shape[0] - 2 > pos[0] >= 2 and img.shape[1] - 2 > pos[1] >= 2):
         # TODO return None
         return None
-    '''
     sub_img = img[pos[0] - 1: pos[0] + 2, pos[1] - 1: pos[1] + 2]
     sx = sobel(sub_img, axis=0)[1][1]
     sy = sobel(sub_img, axis=1)[1][1]
-    return np.arctan2(sx, sy)
+    if sy == 0:
+        grad = np.pi * 0.5
+    else:
+        grad = np.arctan2(sx, sy)
+    grad_vec = rot_vec(np.asarray([0, 1]), grad)
+    return grad_vec
     '''
     g_x = np.dot(img[pos[0], pos[1] - 2: pos[1] + 3], [1, 3, -8, 3, 1])
     g_y = np.dot(img[pos[0] - 2: pos[0] + 3, pos[1]], [1, 3, -8, 3, 1])
@@ -28,6 +34,7 @@ def calc_gradient(img, pos):
     if grad_vec[0] <= 0:
         grad_vec *= -1.0
     return grad_vec
+    '''
 
 def rot_vec(vec, rad):
     c, s = np.cos(rad), np.sin(rad)
@@ -56,11 +63,13 @@ if __name__ == '__main__':
 
     input_file = args.file
     img = Image.open(input_file)
-    img = img.resize((640, round(640.0 * img.size[1] / img.size[0])), Image.BICUBIC)
+    img = img.resize((IMG_SIZE, round(float(IMG_SIZE) * img.size[1] / img.size[0])), Image.BICUBIC)
     img = img.convert('RGB')
 
     d = ImageDraw.Draw(img)
     np_img = np.asarray(img.convert('L'), dtype=float)
+    np_img[np_img < 100] = 0
+    np_img[np_img > 200] = 200
     print(np_img.shape)
     points = []
     for orientation in ['hor', 'ver']:
@@ -68,8 +77,8 @@ if __name__ == '__main__':
             rows = np_img[0::SCANLINE_OFFSET]
         else:
             rows = np_img.T[0::SCANLINE_OFFSET]
-        rows = convolve1d(rows, [1, 3, -8, 3, 1])
-        rows[rows < 200] = 0
+        rows = convolve1d(rows, [-3, -5, 0, 5, 3])
+        rows[abs(rows) < 400] = 0
         if orientation == 'ver':
             rows = rows.T
 
@@ -93,7 +102,7 @@ if __name__ == '__main__':
                 d.ellipse(start + end, int((0xFF0000 if grad is not None else 0x000000) * 0.5), None)
                 d.line([tuple(pos), tuple(new_pos)], 0xFFFFFF)
 
-    for _ in range(20):
+    for _ in range(LINES_TO_EXTRACT):
         max_support = set()
         support_line = None
         for _ in range(1000):
@@ -129,5 +138,6 @@ if __name__ == '__main__':
         d.line([tuple(p1 + (p1 - p2) * 100), tuple(p1 + (p1 - p2) * -100)], 0xFFFFFF)
 
     # print(np.asarray(img).shape)
-    # vis.showimg(np.asarray(img))
     img.save('tmp/debug.png')
+    vis.showimg(np.asarray(img.convert('L')))
+    vis.showimg(np_img)
